@@ -218,7 +218,7 @@ function App() {
     <CurrencyProvider>
       <div className="container app">
       <h1 className="app-title">Balancia</h1>
-      <p className="app-subtitle">by NewtonCode</p>
+      <p className="app-subtitle">by theNewtonCode</p>
       
       <div className="month-year-container">
         <div className="col-md-6 offset-md-3">
