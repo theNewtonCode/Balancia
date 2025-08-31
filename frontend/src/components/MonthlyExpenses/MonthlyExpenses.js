@@ -18,7 +18,9 @@ const MonthlyExpenses = ({
   setActualAmount,
   addPlannedExpense,
   addActualExpense,
-  getComparisonData
+  getComparisonData,
+  deletePlannedExpense,
+  deleteActualExpense
 }) => {
   return (
     <div className="monthly-expenses">
@@ -49,7 +51,11 @@ const MonthlyExpenses = ({
       <div className="comparison-section">
         <h5>Expense Comparison</h5>
         <div className="table-container">
-          <ExpenseComparison data={getComparisonData()} />
+          <ExpenseComparison 
+            data={getComparisonData()} 
+            onDeletePlanned={deletePlannedExpense}
+            onDeleteActual={deleteActualExpense}
+          />
         </div>
       </div>
       

@@ -208,10 +208,52 @@ function App() {
   const getComparisonData = () => {
     const categories = [...new Set([...plannedExpenses.map(e => e.category), ...actualExpenses.map(e => e.category)])];
     return categories.map(category => {
-      const planned = plannedExpenses.find(e => e.category === category)?.amount || 0;
-      const actual = actualExpenses.find(e => e.category === category)?.amount || 0;
-      return { category, planned, actual };
+      const plannedExpense = plannedExpenses.find(e => e.category === category);
+      const actualExpense = actualExpenses.find(e => e.category === category);
+      return { 
+        category, 
+        planned: plannedExpense?.amount || 0,
+        actual: actualExpense?.amount || 0,
+        plannedId: plannedExpense?.id,
+        actualId: actualExpense?.id
+      };
     });
+  };
+
+  const deletePlannedExpense = async (id) => {
+    try {
+      await fetch(`http://localhost:5000/planned-expenses/${id}`, { method: 'DELETE' });
+      fetchPlannedExpenses();
+      fetchSummary();
+    } catch (error) {
+      console.error('Error deleting planned expense:', error);
+    }
+  };
+
+  const deleteActualExpense = async (id) => {
+    try {
+      await fetch(`http://localhost:5000/actual-expenses/${id}`, { method: 'DELETE' });
+      fetchActualExpenses();
+      fetchSummary();
+    } catch (error) {
+      console.error('Error deleting actual expense:', error);
+    }
+  };
+
+  const deleteDailyExpense = async (id) => {
+    try {
+      await fetch(`http://localhost:5000/daily-expenses/${id}`, { method: 'DELETE' });
+      fetchDailyExpenses();
+      fetchDailySummary();
+    } catch (error) {
+      console.error('Error deleting daily expense:', error);
+    }
+  };
+
+  const editDailyExpense = (expense) => {
+    setDailyAmount(expense.amount);
+    setDailyCategory(expense.category);
+    setDailyDescription(expense.description);
   };
 
   return (
@@ -299,6 +341,8 @@ function App() {
             addPlannedExpense={addPlannedExpense}
             addActualExpense={addActualExpense}
             getComparisonData={getComparisonData}
+            deletePlannedExpense={deletePlannedExpense}
+            deleteActualExpense={deleteActualExpense}
           />
         )}
         {activeTab === 'today' && (
@@ -318,6 +362,7 @@ function App() {
             addDailyExpense={addDailyExpense}
             addPerson={addPerson}
             updatePerson={updatePerson}
+            onDeleteExpense={deleteDailyExpense}
           />
         )}
         {activeTab === 'reports' && (

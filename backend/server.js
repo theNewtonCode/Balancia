@@ -201,9 +201,10 @@ app.get('/summary/daily', (req, res) => {
   const today = now.getDate();
   const daysInMonth = new Date(year, month, 0).getDate();
   const daysLeft = daysInMonth - today + 1;
+  const startDate = `${year}-${String(month).padStart(2, '0')}-01`;
+  const endDate = `${year}-${String(month).padStart(2, '0')}-31`;
 
-  // Get spendable balance from monthly summary
-  db.get('SELECT total_income, permanent_saving FROM income WHERE month = ? AND year = ?',
+  db.get('SELECT total_income FROM income WHERE month = ? AND year = ?',
     [month, year], (err, income) => {
       if (err) {
         res.status(500).json({ error: err.message });
@@ -211,28 +212,27 @@ app.get('/summary/daily', (req, res) => {
       }
 
       const total_income = income ? income.total_income : 0;
-      const permanent_saving = income ? income.permanent_saving : 0;
 
-      db.get('SELECT SUM(amount) as planned_total FROM planned_expenses WHERE month = ? AND year = ?',
-        [month, year], (err, planned) => {
+      // Get actual expenses total
+      db.get('SELECT SUM(amount) as actual_total FROM actual_expenses WHERE month = ? AND year = ?',
+        [month, year], (err, actual) => {
           if (err) {
             res.status(500).json({ error: err.message });
             return;
           }
 
-          const planned_total = planned ? planned.planned_total || 0 : 0;
-          const spendable_balance = total_income - planned_total - permanent_saving;
+          const actual_total = actual ? actual.actual_total || 0 : 0;
 
-          // Get actual spent so far this month
-          db.get('SELECT SUM(amount) as actual_total FROM actual_expenses WHERE month = ? AND year = ?',
-            [month, year], (err, actual) => {
+          // Get daily transactions total for current month
+          db.get('SELECT SUM(amount) as daily_total FROM daily_expenses WHERE date >= ? AND date <= ?',
+            [startDate, endDate], (err, daily) => {
               if (err) {
                 res.status(500).json({ error: err.message });
                 return;
               }
 
-              const actual_total = actual ? actual.actual_total || 0 : 0;
-              const remaining_balance = total_income - actual_total;
+              const daily_total = daily ? daily.daily_total || 0 : 0;
+              const remaining_balance = total_income - actual_total - daily_total;
               const todays_allowance = daysLeft > 0 ? remaining_balance / daysLeft : 0;
 
               res.json({
@@ -369,6 +369,56 @@ app.post('/income', (req, res) => {
         res.status(500).json({ error: err.message });
       } else {
         res.json({ month, year, total_income, permanent_saving });
+      }
+    });
+});
+
+// Delete planned expense
+app.delete('/planned-expenses/:id', (req, res) => {
+  const { id } = req.params;
+  db.run('DELETE FROM planned_expenses WHERE id = ?', [id], function(err) {
+    if (err) {
+      res.status(500).json({ error: err.message });
+    } else {
+      res.json({ message: 'Planned expense deleted' });
+    }
+  });
+});
+
+// Delete actual expense
+app.delete('/actual-expenses/:id', (req, res) => {
+  const { id } = req.params;
+  db.run('DELETE FROM actual_expenses WHERE id = ?', [id], function(err) {
+    if (err) {
+      res.status(500).json({ error: err.message });
+    } else {
+      res.json({ message: 'Actual expense deleted' });
+    }
+  });
+});
+
+// Delete daily expense
+app.delete('/daily-expenses/:id', (req, res) => {
+  const { id } = req.params;
+  db.run('DELETE FROM daily_expenses WHERE id = ?', [id], function(err) {
+    if (err) {
+      res.status(500).json({ error: err.message });
+    } else {
+      res.json({ message: 'Daily expense deleted' });
+    }
+  });
+});
+
+// Update daily expense
+app.put('/daily-expenses/:id', (req, res) => {
+  const { id } = req.params;
+  const { amount, category, description } = req.body;
+  db.run('UPDATE daily_expenses SET amount = ?, category = ?, description = ? WHERE id = ?',
+    [amount, category, description, id], function(err) {
+      if (err) {
+        res.status(500).json({ error: err.message });
+      } else {
+        res.json({ message: 'Daily expense updated' });
       }
     });
 });

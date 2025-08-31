@@ -19,7 +19,8 @@ const TodayExpenses = ({
   setSplitWithPeople,
   addDailyExpense,
   addPerson,
-  updatePerson
+  updatePerson,
+  onDeleteExpense
 }) => {
   return (
     <div className="today-expenses">
@@ -42,7 +43,12 @@ const TodayExpenses = ({
         updatePerson={updatePerson}
       />
       
-      <TransactionsAndDebts dailyExpenses={dailyExpenses} debts={debts} />
+      <TransactionsAndDebts 
+        dailyExpenses={dailyExpenses} 
+        debts={debts} 
+        dailySummary={dailySummary}
+        onDeleteExpense={onDeleteExpense}
+      />
     </div>
   );
 };
